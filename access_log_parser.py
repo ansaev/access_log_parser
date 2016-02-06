@@ -8,7 +8,11 @@ class AccessLogParser(object):
 
     def _get_file_content(self, file_name):
         assert file_name
+        file = open(file_name, 'r')
+        assert file
         content = []
+        for line in file:
+            content.append(line)
         return content
 
     def parse_file(self, file_name):
@@ -31,6 +35,26 @@ class AccessLogParser(object):
     def group_by(self, parametr):
         assert self.access_events
         assert parametr
+        temp_events = {}
+        for event in self.access_events:
+            param_value = event[parametr]
+            val = temp_events.get(param_value)
+            if val is None:
+                temp_events[param_value] = [event]
+            else:
+                temp_events[param_value].append(event)
+        self.access_events = temp_events
+
+    def get_top_requested_hosts(self):
+        assert self.access_events
+        self.group_by("remote_host")
+        requested_hosts = []
+        temp_values = self.access_events.values()
+        temp_values.sort(key=len)
+        for value_list in temp_values:
+            requested_hosts.append({"host": value_list[0]["remote_host"], "requests": len(value_list)})
+        requested_hosts.reverse()
+        return requested_hosts
 
 
 
